@@ -1,0 +1,13 @@
+{
+    "mcpServers": {
+        "artifex-engine": {
+            "command": "artifex-mcp-server",
+            "args": [
+                "--transport",
+                "stdio",
+                "--config",
+                "../../data/samples/config.toml"
+            ]
+        }
+    }
+}
