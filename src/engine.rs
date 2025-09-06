@@ -10,13 +10,16 @@ use artifex_engine::{self, Config, MachineInfo, ProgramOutput};
 use rmcp::{
     ErrorData as McpError, RoleServer, ServerHandler,
     handler::server::{
-        router::tool::ToolRouter,
+        router::{prompt::PromptRouter, tool::ToolRouter},
         wrapper::{Json, Parameters},
     },
     model::{
-        Implementation, InitializeRequestParam, InitializeResult,
+        GetPromptRequestParam, GetPromptResult, Implementation,
+        InitializeRequestParam, InitializeResult, ListPromptsResult,
+        PaginatedRequestParam, PromptMessage, PromptMessageRole,
         ProtocolVersion, ServerCapabilities, ServerInfo,
     },
+    prompt, prompt_handler, prompt_router,
     schemars::{self, JsonSchema},
     service::RequestContext,
     tool, tool_handler, tool_router,
@@ -69,6 +72,16 @@ pub struct UpgradeResult {
     completed: bool,
 }
 
+/// Arguments for the artifex_execute prompt.
+#[derive(Debug, Serialize, Deserialize, JsonSchema)]
+pub struct ExecutePromptArgs {
+    /// Program to execute.
+    pub command: String,
+    /// Optional arguments to pass to the program.
+    #[serde(default)]
+    pub arguments: Vec<String>,
+}
+
 impl From<ProgramOutput> for ExecuteResult {
     fn from(value: ProgramOutput) -> Self {
         Self {
@@ -83,6 +96,7 @@ impl From<ProgramOutput> for ExecuteResult {
 pub struct Engine {
     inner: artifex_engine::Engine,
     tool_router: ToolRouter<Engine>,
+    prompt_router: PromptRouter<Engine>,
 }
 
 impl Default for Engine {
@@ -90,11 +104,13 @@ impl Default for Engine {
         Self {
             inner: artifex_engine::Engine::default(),
             tool_router: Self::tool_router(),
+            prompt_router: Self::prompt_router(),
         }
     }
 }
 
 #[tool_router]
+#[prompt_router]
 impl Engine {
     /// Create a new engine.
     pub fn with_config(config: Config) -> Self {
@@ -157,14 +173,54 @@ impl Engine {
             .map_err(|e| McpError::internal_error(e.to_string(), None))?;
         Ok(Json(UpgradeResult { completed: true }))
     }
+
+    #[prompt(
+        description = "Template to inspect the host and summarize findings"
+    )]
+    pub fn artifex_inspect(&self) -> Vec<PromptMessage> {
+        vec![PromptMessage::new_text(
+            PromptMessageRole::User,
+            "Use the 'inspect' tool to retrieve the kernel version and system uptime. Then summarize the results in 1–2 sentences.",
+        )]
+    }
+
+    #[prompt(description = "Run a command via the execute tool")]
+    pub fn artifex_execute(
+        &self,
+        Parameters(args): Parameters<ExecutePromptArgs>,
+    ) -> Vec<PromptMessage> {
+        let mut msg =
+            format!("Use the 'execute' tool to run '{}'", args.command);
+        if !args.arguments.is_empty() {
+            msg.push_str(&format!(" with arguments {:?}", args.arguments));
+        }
+        msg.push_str(
+            ". Capture stdout and stderr. Return a concise summary and include short outputs.",
+        );
+        vec![PromptMessage::new_text(PromptMessageRole::User, msg)]
+    }
+
+    #[prompt(
+        description = "Start an engine upgrade and follow streamed progress"
+    )]
+    pub fn artifex_upgrade(&self) -> Vec<PromptMessage> {
+        vec![PromptMessage::new_text(
+            PromptMessageRole::User,
+            "Call the 'upgrade' tool and wait for completion. The server streams progress updates; report final status concisely when done.",
+        )]
+    }
 }
 
 #[tool_handler]
+#[prompt_handler]
 impl ServerHandler for Engine {
     fn get_info(&self) -> ServerInfo {
         ServerInfo {
             protocol_version: ProtocolVersion::V_2025_06_18,
-            capabilities: ServerCapabilities::builder().enable_tools().build(),
+            capabilities: ServerCapabilities::builder()
+                .enable_tools()
+                .enable_prompts()
+                .build(),
             server_info: Implementation::from_build_env(),
             instructions: Some(
                 "This server provides Artifex Engine tools. Tools: inspect"
