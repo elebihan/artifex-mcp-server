@@ -62,6 +62,13 @@ pub struct ExecuteResult {
     stderr: String,
 }
 
+/// Result from an upgrade operation.
+#[derive(Debug, Serialize, Deserialize, JsonSchema)]
+pub struct UpgradeResult {
+    /// Whether the upgrade completed successfully or not.
+    completed: bool,
+}
+
 impl From<ProgramOutput> for ExecuteResult {
     fn from(value: ProgramOutput) -> Self {
         Self {
@@ -118,6 +125,37 @@ impl Engine {
             .inspect()
             .map_err(|e| McpError::internal_error(e.to_string(), None))?;
         Ok(Json(info.into()))
+    }
+
+    #[tool(description = "Upgrade engine (streaming progress)")]
+    pub fn upgrade(
+        &self,
+        context: RequestContext<RoleServer>,
+    ) -> Result<Json<UpgradeResult>, McpError> {
+        let peer = context.peer.clone();
+        let progress_token = context.meta.get_progress_token();
+        self.inner
+            .upgrade(|position| {
+                if let Some(token) = progress_token.clone() {
+                    let peer = peer.clone();
+                    tokio::spawn(async move {
+                        let _ = peer
+                            .notify_progress(
+                                rmcp::model::ProgressNotificationParam {
+                                    progress_token: token,
+                                    progress: position as f64,
+                                    total: Some(100.0),
+                                    message: Some(format!(
+                                        "Upgrade: {position}%"
+                                    )),
+                                },
+                            )
+                            .await;
+                    });
+                }
+            })
+            .map_err(|e| McpError::internal_error(e.to_string(), None))?;
+        Ok(Json(UpgradeResult { completed: true }))
     }
 }
 
