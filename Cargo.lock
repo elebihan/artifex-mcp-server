@@ -111,21 +111,31 @@ dependencies = [
 ]
 
 [[package]]
-name = "artifex-mcp-server"
+name = "artifex-mcp-server-cli"
 version = "0.1.1"
 dependencies = [
  "anyhow",
  "artifex-engine",
+ "artifex-mcp-server-service",
  "axum",
  "clap",
  "rmcp",
  "serde",
- "serde_json",
  "thiserror 2.0.16",
  "tokio",
  "toml",
  "tracing",
  "tracing-subscriber",
+]
+
+[[package]]
+name = "artifex-mcp-server-service"
+version = "0.1.1"
+dependencies = [
+ "artifex-engine",
+ "rmcp",
+ "serde",
+ "tokio",
 ]
 
 [[package]]

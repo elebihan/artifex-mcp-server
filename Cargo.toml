@@ -1,21 +1,16 @@
-[package]
-name = "artifex-mcp-server"
+[workspace]
+members = ["crates/cli", "crates/service"]
+resolver = "2"
+
+[workspace.package]
 version = "0.1.1"
 edition = "2024"
 license = "MIT"
 authors = ["Eric Le Bihan <eric.le.bihan.dev@free.fr>"]
 rust-version = "1.85"
 
-[lints.clippy]
-pedantic = { level = "deny", priority = -1 }
-missing_errors_doc = "allow"
-result_large_err = "allow"
-
-[dependencies]
-anyhow = "1.0.99"
+[workspace.dependencies]
 artifex-engine = { git = "https://github.com/elebihan/artifex.git", rev = "6870a03" }
-axum = "0.8.4"
-clap = { version = "4.5.46", features = ["derive"] }
 rmcp = { version = "0.6.1", features = [
   "macros",
   "schemars",
@@ -25,18 +20,14 @@ rmcp = { version = "0.6.1", features = [
   "transport-worker",
 ] }
 serde = { version = "1.0.219", features = ["derive"] }
-serde_json = "1.0.143"
-thiserror = "2.0.16"
 tokio = { version = "1.47.1", features = [
   "macros",
   "rt",
   "rt-multi-thread",
   "signal",
 ] }
-toml = "0.9.5"
-tracing = "0.1.41"
-tracing-subscriber = { version = "0.3.19", features = [
-  "env-filter",
-  "std",
-  "fmt",
-] }
+
+[workspace.lints.clippy]
+pedantic = { level = "deny", priority = -1 }
+missing_errors_doc = "allow"
+result_large_err = "allow"
