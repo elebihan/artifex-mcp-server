@@ -1,0 +1,38 @@
+#!/usr/bin/env bash
+
+# set -euo pipefail
+
+IS_AMEND=$(ps -ocommand= -p ${PPID} | grep -e '--amend')
+
+if [ -n "${IS_AMEND}" ]; then
+    exit 0
+fi
+
+declare -a checks=(
+    "TOML style"
+    "Rust style"
+    "Rust code"
+)
+declare -A commands=(
+    ["TOML style"]="taplo fmt"
+    ["Rust style"]="cargo fmt --all -- --check"
+    ["Rust code"]="cargo clippy --allow-dirty --fix"
+)
+
+function check() {
+    local label=$1
+    local cmd=$2
+    echo "🔍 Checking ${label}..."
+    eval "${cmd}"
+    if test $? != 0; then
+        echo "❌ Checking ${label} failed!"
+        echo "Please fix the above issues."
+        exit 1
+    else
+        echo "✅ Checking ${label} pass!"
+    fi
+}
+
+for check in "${checks[@]}"; do
+    check "${check}" "${commands[${check}]}"
+done
