@@ -135,6 +135,7 @@ dependencies = [
  "artifex-engine",
  "rmcp",
  "serde",
+ "serde_json",
  "tokio",
 ]
 

@@ -10,4 +10,5 @@ description = "Artifex MCP server service"
 artifex-engine = { git = "https://github.com/elebihan/artifex.git", rev = "6870a03" }
 rmcp = { workspace = true }
 serde = { workspace = true }
+serde_json = "1.0.143"
 tokio = { workspace = true }
