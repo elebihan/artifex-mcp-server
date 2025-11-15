@@ -1,0 +1,29 @@
+[package]
+name = "artifex-mcp-server-cli"
+version.workspace = true
+authors.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "Artifex MCP server CLI"
+
+[[bin]]
+name = "artifex-mcp-server"
+path = "src/main.rs"
+
+[dependencies]
+anyhow = "1.0.99"
+artifex-engine = { workspace = true }
+artifex-mcp-server-service = { path = "../service" }
+axum = "0.8.4"
+clap = { version = "4.5.46", features = ["derive"] }
+rmcp = { workspace = true }
+serde = { workspace = true }
+thiserror = "2.0.16"
+tokio = { workspace = true }
+toml = "0.9.5"
+tracing = "0.1.41"
+tracing-subscriber = { version = "0.3.19", features = [
+  "env-filter",
+  "std",
+  "fmt",
+] }

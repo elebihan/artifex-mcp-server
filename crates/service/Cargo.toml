@@ -1,0 +1,13 @@
+[package]
+name = "artifex-mcp-server-service"
+version.workspace = true
+authors.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "Artifex MCP server service"
+
+[dependencies]
+artifex-engine = { git = "https://github.com/elebihan/artifex.git", rev = "6870a03" }
+rmcp = { workspace = true }
+serde = { workspace = true }
+tokio = { workspace = true }

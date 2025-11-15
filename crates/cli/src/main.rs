@@ -8,11 +8,10 @@
 
 mod cli;
 mod config;
-mod engine;
 
+use artifex_mcp_server_service::Engine;
 use cli::{TransportMode, build_cli};
 use config::Config;
-use engine::Engine;
 use rmcp::{
     ServiceExt,
     transport::{
